@@ -1,4 +1,4 @@
-#Restart_Spring
+# Restart_Spring
  
 - [개요](#개요)
     - [Spring 학습](#Spring-학습)
@@ -53,7 +53,7 @@ Spring Boot 내에 Spring MVC, Spring Data를 활용하여 구현된 예제 프�
 
 - spring_config_regacy : JAVA 국비지원 교육에서 처음 접한 구조로 
 전자정부 프레임워크 3.5 버전에서도 유사한 구조로 구성.  
-![mvc2구조](./image/structure_old.jpg "MVC1, MVC2의 구조")
+![mvc2구조](image/structure_old.JPG "MVC1, MVC2의 구조")
 
 ### 개발환경
 - IDE : IntelliJ IDEA Ultimate 버전
@@ -62,9 +62,8 @@ Spring Boot 내에 Spring MVC, Spring Data를 활용하여 구현된 예제 프�
 
 
 ## 학습내용
-### 스프링 프레임워크 핵심 기능
+### 스프링 프레임워크 핵심 기능 [내용정리](./spring-petclinic/about-spring.md)
 1. Spring IoC
 1. Spring AOP
 1. Spring PSA
-#### [내용정리 (spring-sample)](./spring-petclinic/about-spring.md)
 
