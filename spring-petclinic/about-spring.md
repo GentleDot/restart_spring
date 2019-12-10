@@ -1,5 +1,12 @@
 # 스프링 프레임워크 핵심 기능
-## 예제 프로젝트 : Spring Petclinic
+## 목차
+- [예제 프로젝트 확인](#예제-프로젝트)
+- [Spring IoC](#Spring-IoC)
+- [Spring AOP](#Spring-AOP)
+- [Spring PSA](#Spring-PSA)
+
+## 예제 프로젝트  
+__Spring Petclinic__
 - Maven 빌드
     - pom.xml
         - 스프링부트 (spring-boot-starter-*)
@@ -227,7 +234,7 @@ class AAAABBBB {
     - 프록시 패턴(스프링 AOP)
         - https://refactoring.guru/design-patterns/proxy
         - 예시       
-        ![프록시 패턴의 예](../image/proxy.png)
+        ![프록시 패턴의 예](../image/proxy.JPG)
 
 - Aspect, Advice, PointCut
     - Aspect : 어디에서(PointCut) 무엇을 할 것인지(Advice)를 합쳐놓은 개념
@@ -367,5 +374,3 @@ Portable Service Abstraction
     - Ehcache 라이브러리를 주로 사용
         - Ehcache API, cache 추상화 (@EnbaleCaching, @Cacheable, @CacheEvict, @CachePut 등) 
     - JCache (Java EE 7 부터 등장)
-
-
