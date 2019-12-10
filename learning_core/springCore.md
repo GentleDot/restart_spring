@@ -3,12 +3,16 @@
 ## 목차
 - [참고 자료](#출처)
 - [학습 목표](#목표)
+- 학습 내용
+    - [IoC Container](#IoC-Container)
 
 ## 출처
 - 강좌
     1. [스프링 프레임워크 핵심 기술 / 백기선](https://www.inflearn.com/course/spring-framework_core)
-- 자료
+- 문서
     1. [Spring Framework Documentation - Core](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#spring-core)
+- 도서
+    1. 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 
 
 ## 목표
 1. IoC(Inversion of Control), AOP(Aspect Oriented Programming), PSA(Portable Service Abstraction) 에 대한 이해
@@ -18,7 +22,9 @@
 1. Spring Core 에서 제공되는 기능 확인
 
 
-## IoC Container
+## 학습 내용
+
+### IoC Container
 출처 : [스프링 프레임워크 핵심 기술 / 백기선](https://www.inflearn.com/course/spring-framework_core)
 > Inversion of Control: 의존 관계 주입(Dependency Injection)이라고도 하며, 어떤 객체가
   사용하는 의존 객체를 직접 만들어 사용하는게 아니라, 주입 받아 사용하는 방법을 말 함.
@@ -38,6 +44,8 @@
         - Prototype : 객체 생성마다 다른 객체 (다른 메모리 주소)
         - ...
     - Lifecycle interface  
+    
+        출처: [Interface BeanFactory](https://docs.spring.io/spring-framework/docs/5.0.8.RELEASE/javadoc-api/org/springframework/beans/factory/BeanFactory.html)  
        > Bean factory implementations should support the standard bean lifecycle interfaces as far as possible. The full set of initialization methods and their standard order is:
        
             1. BeanNameAware's setBeanName                                                                                                                                                                                                 
@@ -60,4 +68,59 @@
             1. postProcessBeforeDestruction methods of DestructionAwareBeanPostProcessors  
             2. DisposableBean's destroy  
             3. a custom destroy-method definition  
-     
+ 
+    - Application의 lifecycle과 Bean의 lifecycle
+        
+        Lifecycle of Application  
+        
+        | cycle | 내용 |
+        |:---|---|
+        | Initialization(초기화) | 이용하기 위해서 Application을 생성함.  시스템 리소스를 확보. |
+        | Use(이용) | Application 에서 이용되는 과정 |
+        | Destruction(종료) | 종료 처리.  시스템의 리소스를 돌려줌.  Application은 Garbage collection 의 대상이 됨. |
+    
+        - Initialization
+            - Bean 정의 로드(설정)
+            - Bean 생성 및 초기화
+        - Use
+            - ApplicationContext(BeanFactory)_getBean()
+        - Destruction
+            - Bean 제거 메소드
+            - Bean이 사용한 리소스 반환
+            - Container 종료
+
+    - lifecycle 관리  
+        1. org.springframework.beans.factory.InitializingBean 인터페이스 구현
+        1. annotation
+            
+            > 출처 : 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 p99, 표2-6
+            
+            | annotation | 설명 | 
+            |:---|---|
+            | @PostConstruct | 초기 처리를 하는 메서드 선언. 메서드 이름은 임의로 설정 가능.  단 메서드와 인수 없이 반환형은 void 형으로 해야 함 |
+            | @preDestroy | 종료 처리를 하는 메서드 선언. 메서드 이름은 임의.  단, 메서드 인수 없이 반환형은 void 형으로 해야 한다. |
+            
+        - @PostConstruct는 IoC container에 의해 인스턴스 변수에 무언가 injection 된 다음 호출. 즉, injection 된 값으로 초기 처리할 때 사용.  
+        (다른 방법으론 생성자에서 초기 처리를 하면 된다고 함)
+            ```
+                @PostConstruct
+                public void postConstruct(){
+                    System.out.println("===================");
+                    System.out.println("Hello SpringBoot");
+                    System.out.println("===================");
+                }
+            ```   
+        - @PreDestroy는 종료 처리 시 사용. (Java에는 소멸자가 없음.)
+            ```
+               @PreDestroy
+               public void stop(){
+                   System.out.println("===================");
+                   System.out.println("goodBye SpringBoot");
+                   System.out.println("===================");
+               }
+            ```
+
+       
+        
+         
+        

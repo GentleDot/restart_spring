@@ -10,7 +10,7 @@
  
  ## 이력
  
- | 날짜 | 내용
+ | 날짜 | 내용 |
  |:---:|---|
  | 2019.12.05 | 최초 생성 |
  | 2019.12.10 | 스프링 프레임워크 핵심 기능 1차 정리 |
@@ -53,8 +53,9 @@ Spring Boot 내에 Spring MVC, Spring Data를 활용하여 구현된 예제 프�
         - [스프링 프레임워크 핵심 기술 / 백기선](https://www.inflearn.com/course/spring-framework_core)
         - [더 자바, 코드를 조작하는 다양한 방법 / 백기선](https://www.inflearn.com/course/the-java-code-manipulation)
         - 스프링 5 레시피(4판) / 마틴 데니엄, 다니엘 루비오, 조시 롱 (옮긴이 : 이일옹, 펴낸이 : 김태현) - 한빛미디어
+        - 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 
 
-- spring_config_regacy : JAVA 국비지원 교육에서 처음 접한 구조로 
+- spring_config_regacy : JAVA 국비지원 교육에서 처음 접한 구조로  
 전자정부 프레임워크 3.5 버전에서도 유사한 구조로 구성.  
 ![mvc2구조](image/structure_old.JPG "MVC1, MVC2의 구조")
 
@@ -70,7 +71,7 @@ Spring Boot 내에 Spring MVC, Spring Data를 활용하여 구현된 예제 프�
 1. Spring AOP
 1. Spring PSA
 
-### 스프링 프레임워크 Core
+### 스프링 프레임워크 Core [내용정리](./learning_core/springCore.md)
 1. IoC 컨테이너와 빈
 1. 리소스
 1. Validation
