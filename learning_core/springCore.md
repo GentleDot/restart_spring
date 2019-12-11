@@ -120,7 +120,104 @@
                }
             ```
 
-       
+- ApplicationContext와 Bean 설정 방법
+    - 설정 (application.xml)
+    ```
+    <?xml version="1.0" encoding="UTF-8"?>
+    <beans xmlns="http://www.springframework.org/schema/beans"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    
+        <bean id="bookService" class="net.gentledot.demospringcore.demo.book.BookService">
+            <property name="bookRepository" ref="bookRepository" />
+        </bean>
         
+        <bean id="bookRepository" class="net.gentledot.demospringcore.demo.book.BookRepository"></bean>
+        
+    </beans>
+    
+    ```
+    - 설정 (@Configuration, @Bean)
+    ```
+    package net.gentledot.demospringcore.demo.config;
+    
+    import net.gentledot.demospringcore.demo.book.BookRepository;
+    import net.gentledot.demospringcore.demo.book.BookService;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    
+    @Configuration
+    public class ApplicationConfig {
+    
+        @Bean
+        public BookRepository bookRepository() {
+            return new BookRepository();
+        }
+        
+        @Bean
+        public BookService bookService() {
+            BookService bookService = new BookService();
+            bookService.setBookRepository(bookRepository());
+        }
+    }
+    ```
+  
+    - bean 꺼내기 (xml : ClassPathXmlApplicationContext)
+    ```
+    public cass DemoApplication(){
+        public static void main(String[] args) {
+            ApplicationContext applicationContext = new ClassPathXmlApplicationContext("application.xml");
+            String[] beanDefinitionNames = applicationContext.getBeanDefinitionNames();
+            System.out.println(Arrays.toString(beanDefinitionNames));
+            BookService bookService = (BookService) applicationContext.getBean("bookService");
+            System.out.println(bookService.bookRepository != null);
+        }
+    }
+    ```
+  
+    - bean 꺼내기 (@annotation : AnnotationConfigApplicationContext)
+    ```
+    public cass DemoApplication(){
+        public static void main(String[] args) {
+            ApplicationContext applicationContext = new AnnotationConfigApplicationContext(ApplicationConfig.class);
+        }
+    }
+    ```
+
+- component-scan
+    - 설정 (application.xml)
+    ```
+    <?xml version="1.0" encoding="UTF-8"?>
+    <beans xmlns="http://www.springframework.org/schema/beans"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:context="http://www.springframework.org/schema/context"
+           xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+        
+        <context:component-scan base-package="net.gentledot.demospringcore.demo"/>
+    
+    </beans>
+    ```
+    - 설정 (@ComponentScan)
+    ```
+    package net.gentledot.demospringcore.demo.config;
+    
+    import net.gentledot.demospringcore.demo.DemoApplication;
+    import org.springframework.context.annotation.ComponentScan;
+    import org.springframework.context.annotation.Configuration;
+    
+    @Configuration
+    @ComponentScan(basePackageClasses = DemoApplication.class)
+    public class ApplicationConfig {
+    }
+    ```
+  
+    - Bean 등록 (특정 패키지 이하의 모든 클래스 중 @Component annotation을 사용한 클래스를 Bean으로 자동 등록)
+    ```
+    @Component
+    public class BookService {
+    
+    }
+    ```
+      
          
         

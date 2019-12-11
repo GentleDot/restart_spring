@@ -1,11 +1,6 @@
 package net.gentledot.demospringcore.demo.book;
 
-import org.springframework.stereotype.Repository;
 
-@Repository
-public class BookRepository {
-
-    public Book save(Book book) {
-        return null;
-    }
+public interface BookRepository {
+    public Book save(Book book);
 }
