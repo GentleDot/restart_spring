@@ -79,9 +79,12 @@
         | Use(이용) | Application 에서 이용되는 과정 |
         | Destruction(종료) | 종료 처리.  시스템의 리소스를 돌려줌.  Application은 Garbage collection 의 대상이 됨. |
     
-        - Initialization
+        - Initialization (BeanPostProcessor, InitializingBean interface)
             - Bean 정의 로드(설정)
             - Bean 생성 및 초기화
+            - BeanPostProcessor.postProcessBeforeInitialization()  
+            -> InitializingBean.afterPropertiesSet()   
+            -> BeanPostProcessor.postProcessAfterInitialization()   
         - Use
             - ApplicationContext(BeanFactory)_getBean()
         - Destruction
@@ -215,9 +218,55 @@
     ```
     @Component
     public class BookService {
-    
     }
     ```
       
-         
+- @Autowired
+    - 사용할 수 있는 위치
+        - Constructor (Spring 4.3 이후부터는 하나만 있는 생성자에 @Autowire 생략 가능)
+            ```
+            private final BookRepository bookRepository;
+            
+            @Autowired // Spring 4.3 이상이면 생략 가능
+            public BookService(BookRepository bookRepository) {
+                this.bookRepository = bookRepository;
+            }
+            ```
+        - Field
+            ```
+            // @Autowired (required = false) 라면 의존성 주입이 필수가 아니어도 인스턴스 생성됨.
+            @Autowired
+            private BookRepository bookRepository;
+            ```
+        - Setter
+            ```
+            private BookRepository bookRepository;
+                
+            // @Autowired (required = false) 라면 의존성 주입이 필수가 아니어도 인스턴스 생성됨.
+            @Autowired
+            public void setBookRepository(BookRepository bookRepository) {
+                this.bookRepository = bookRepository;
+            }
+            ```
+    
+    - Bean 등록의 경우의 수
+        1. 해당 타입의 Bean이 없는 경우
+        1. 해당 타입의 Bean이 한 개인 경우
+        1. 해당 타입의 Bean이 여러 개인 경우
+            - 여러 Bean 중 하나만 사용해야 할 경우
+                - 사용하지 않는 Bean은 제거 하거나
+                - 해당하는 객체와 같은 이름의 Bean 찾으면 해당 Bean 사용
+                - 못 찾으면 실패
+            - 여러 Bean 중 여러 개를 사용해야 할 경우
+                - 대표 객체는 @Primary로 설정
+                - 이외에 사용해야할 객체는 @Qualifier 로 Bean을 찾아 사용
         
+    - 같은 타입의 Bean이 여러개일 때
+        > Consider marking one of the beans as @Primary, updating the consumer to accept multiple beans, or using @Qualifier to identify the bean that should be consumed
+        - @Primary
+        - 모두 주입 받기 (일괄적인 동작을 설정해야 할 경우)
+        - @Qualifier
+    
+    - AutowiredAnnotationBeanPostProcessor extends BeanPostProcessor
+        > 스프링이 제공하는 @Autowired와 @Value annotation 그리고 JSR-330의
+          @Inject annotation 지원하는 annotation 처리기.
