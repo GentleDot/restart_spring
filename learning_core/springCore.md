@@ -5,12 +5,19 @@
 - [학습 목표](#목표)
 - 학습 내용
     - [IoC Container](#IoC-Container)
-
+        - [Bean](#Bean)
+        - [ApplicationContext와 Bean 설정 방법](#ApplicationContext와-Bean-설정-방법)
+        - [component-scan](#component-scan)
+        - [@Autowired](#@Autowired)
+        - [@Component](#@Component)
+        - [Bean의 Scope](#Scope-of-Beans)
+        
 ## 출처
 - 강좌
     1. [스프링 프레임워크 핵심 기술 / 백기선](https://www.inflearn.com/course/spring-framework_core)
 - 문서
     1. [Spring Framework Documentation - Core](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#spring-core)
+    1. [Quick Guide to Spring Bean Scopes](https://www.baeldung.com/spring-bean-scopes)
 - 도서
     1. 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 
 
@@ -29,10 +36,9 @@
 > Inversion of Control: 의존 관계 주입(Dependency Injection)이라고도 하며, 어떤 객체가
   사용하는 의존 객체를 직접 만들어 사용하는게 아니라, 주입 받아 사용하는 방법을 말 함.
 
-#### Spring IoC Container ?
 1. Application Component 의 중앙 저장소
 1. Bean 설정 소스로부터 빈 정의를 읽어들이고 빈을 구성, 제공
-1. Class
+1. 관련 Class
     - BeanFactory
     - ApplicationContext
         
@@ -356,3 +362,196 @@ public class BookService {
        org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor@23a870b6
        */
         ```
+
+#### Scope of Beans
+> 출처 : [Quick Guide to Spring Bean Scopes](https://www.baeldung.com/spring-bean-scopes) 
+
+- Scope
+    - Singleton (default)
+    - Prototype
+    - web-aware (HTTP Session, WebSocket session)
+        - Request
+        - Session
+        - WebSocket
+ 
+ - 빈을 참조 할 때...
+    ```
+    @Component
+    public class Single {
+    
+        @Autowired
+        Proto proto;
+    
+        public Proto getProto() {
+            return proto;
+        }
+    }
+    ```
+    ```
+    @Component @Scope("prototype")
+    public class Proto {
+    
+        @Autowired
+        Single single;
+    
+        public Single getSingle() {
+            return single;
+        }
+    }
+    ```
+  
+    ```
+    @Component
+    public class AppRunner implements ApplicationRunner {
+    
+        @Autowired
+        ApplicationContext ctx;
+    
+        @Override
+        public void run(ApplicationArguments args) throws Exception {
+            System.out.println("====== single ======");
+            System.out.println(ctx.getBean(Single.class));
+            System.out.println(ctx.getBean(Single.class));
+            System.out.println(ctx.getBean(Single.class));
+            System.out.println("======");
+            System.out.println("====== proto ======");
+            System.out.println(ctx.getBean(Proto.class));
+            System.out.println(ctx.getBean(Proto.class));
+            System.out.println(ctx.getBean(Proto.class));
+            System.out.println("======");
+            System.out.println("====== proto by single ======");
+            System.out.println(ctx.getBean(Single.class).getProto());
+            System.out.println(ctx.getBean(Single.class).getProto());
+            System.out.println(ctx.getBean(Single.class).getProto());
+            System.out.println("======");
+            System.out.println("====== single by proto ======");
+            System.out.println(ctx.getBean(Proto.class).getSingle());
+            System.out.println(ctx.getBean(Proto.class).getSingle());
+            System.out.println(ctx.getBean(Proto.class).getSingle());
+            System.out.println("======");
+        }
+    }
+    ```
+    ```
+    2019-12-13 00:48:25.638  INFO 19836 --- [  restartedMain] n.g.demospringcore.demo.DemoApplication  : Started DemoApplication in 1.439 seconds (JVM running for 2.383)
+    ====== single ======
+    net.gentledot.demospringcore.demo.book.Single@5f9f90ee
+    net.gentledot.demospringcore.demo.book.Single@5f9f90ee
+    net.gentledot.demospringcore.demo.book.Single@5f9f90ee
+    ======
+    ====== proto ======
+    net.gentledot.demospringcore.demo.book.Proto@1dcfe2cc
+    net.gentledot.demospringcore.demo.book.Proto@3e74097b
+    net.gentledot.demospringcore.demo.book.Proto@6c1560db
+    ======
+    ====== proto by single ======
+    net.gentledot.demospringcore.demo.book.Proto@667c1f02
+    net.gentledot.demospringcore.demo.book.Proto@667c1f02
+    net.gentledot.demospringcore.demo.book.Proto@667c1f02
+    ======
+    ====== single by proto ======
+    net.gentledot.demospringcore.demo.book.Single@5f9f90ee
+    net.gentledot.demospringcore.demo.book.Single@5f9f90ee
+    net.gentledot.demospringcore.demo.book.Single@5f9f90ee
+    ======
+    ```
+    - Prototype bean이 Singleton bean을 참조하면 아무 문제 없음.
+    
+    - Singleton bean이 Prototype bean을 참조하면
+        - Prototype bean 업데이트가 되지 않음.
+
+- Singleton bean 사용 시 유의사항
+    - ApplicationContext 초기 구동 시 instance 생성됨.
+    - 긴 생명주기를 가지고 있음
+    - property가 공유됨. (여러 곳에서 변경 시 같은 주소의 객체를 참조하기 때문에 의도하지 않은 값 변동이 있을 수 있음)
+        
+- Protype bean이 업데이트 되려면
+    - scoped-proxy
+        ```
+        public enum ScopedProxyMode {
+        	/**
+        	 * Default typically equals {@link #NO}, unless a different default
+        	 * has been configured at the component-scan instruction level.
+        	 */
+        	DEFAULT,
+        
+        	/**
+        	 * Do not create a scoped proxy.
+        	 * <p>This proxy-mode is not typically useful when used with a
+        	 * non-singleton scoped instance, which should favor the use of the
+        	 * {@link #INTERFACES} or {@link #TARGET_CLASS} proxy-modes instead if it
+        	 * is to be used as a dependency.
+        	 */
+        	NO,
+        
+            // dynamic proxy : interface 기반 proxy 구현만 가능
+        	/**
+        	 * Create a JDK dynamic proxy implementing <i>all</i> interfaces exposed by
+        	 * the class of the target object. 
+        	 */
+        	INTERFACES,
+        
+            // CGLIB proxy : class 기반 proxy 구현 가능
+        	/**
+        	 * Create a class-based proxy (uses CGLIB).
+        	 */
+        	TARGET_CLASS;
+        }
+        ``` 
+        ```
+        @Component @Scope(value = "prototype", proxyMode = ScopedProxyMode.TARGET_CLASS)
+        public class Proto {
+        
+            @Autowired
+            Single single;
+        
+            public Single getSingle() {
+                return single;
+            }
+        }
+        ```
+        ```
+        ====== proto by single ======
+        net.gentledot.demospringcore.demo.book.Proto@4eb473ca
+        net.gentledot.demospringcore.demo.book.Proto@2473d9e7
+        net.gentledot.demospringcore.demo.book.Proto@6992a0c7
+        ======
+        ```
+    
+    - ObjectProvider
+        ```
+        @Component
+        @Scope(value = "prototype")
+        public class Proto {
+        
+            @Autowired
+            Single single;
+        
+            public Single getSingle() {
+                return single;
+            }
+        }
+        ```
+        ```
+        @Component
+        public class Single {
+            @Autowired
+            private ObjectProvider<Proto> proto;
+        
+            public Proto getProto() {
+                return proto.getIfAvailable();
+            }
+        }
+        ```
+        ```
+        ====== proto by single ======
+        net.gentledot.demospringcore.demo.book.Proto@20df702e
+        net.gentledot.demospringcore.demo.book.Proto@1dbc9cff
+        net.gentledot.demospringcore.demo.book.Proto@41ac533
+        ======
+        ```
+
+- Proxy Pattern
+> 출처 : [위키백과 - 프록시 패턴](https://ko.wikipedia.org/wiki/%ED%94%84%EB%A1%9D%EC%8B%9C_%ED%8C%A8%ED%84%B4)
+>![proxy-pattern](https://upload.wikimedia.org/wikipedia/commons/7/75/Proxy_pattern_diagram.svg "wikipedia 자료 : proxy-pattern")      
+
