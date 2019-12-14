@@ -11,6 +11,7 @@
         - [@Autowired](#@Autowired)
         - [@Component](#@Component)
         - [Bean의 Scope](#Scope-of-Beans)
+        - [Environment](#Environment)
         
 ## 출처
 - 강좌
@@ -18,6 +19,7 @@
 - 문서
     1. [Spring Framework Documentation - Core](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#spring-core)
     1. [Quick Guide to Spring Bean Scopes](https://www.baeldung.com/spring-bean-scopes)
+    1. [스프링 @Profile 어노테이션을 통한 환경 설정(Spring Environment Configuration, @Profile)](https://engkimbs.tistory.com/712)
 - 도서
     1. 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 
 
@@ -553,5 +555,62 @@ public class BookService {
 
 - Proxy Pattern
 > 출처 : [위키백과 - 프록시 패턴](https://ko.wikipedia.org/wiki/%ED%94%84%EB%A1%9D%EC%8B%9C_%ED%8C%A8%ED%84%B4)
->![proxy-pattern](https://upload.wikimedia.org/wikipedia/commons/7/75/Proxy_pattern_diagram.svg "wikipedia 자료 : proxy-pattern")      
+>![proxy-pattern](https://upload.wikimedia.org/wikipedia/commons/7/75/Proxy_pattern_diagram.svg "wikipedia 자료 : proxy-pattern")
 
+
+#### Environment      
+>[스프링 @Profile 어노테이션을 통한 환경 설정(Spring Environment Configuration, @Profile)](https://engkimbs.tistory.com/712)
+
+profile과 property를 다루는 interface
+
+ApplicationContext extends ​EnvironmentCapable  
+getEnvironment()
+
+- profile
+    - bean들의 그룹
+    - Environment의 역할 : 활성화할 프로파일 확인 및 설정
+
+- profile use case
+    - 테스트 환경에서는 A라는 Bean, 배포 환경에서는 B라는 Bean을...
+    - C라는 Bean은 모니터링 용도라 테스트 때는 필요없고 배포할 때만 등록...
+    
+- profile 정의
+    - class에 정의
+        - @Configuration @Profile(“test”)
+        - @Component @Profile(“test”)
+    - method에 정의
+        - @Bean @Profile(“test”)
+
+- profile 설정
+    - -Dspring.profiles.avtive=”test,A,B,...”
+    - @ActiveProfiles​ (테스트용)
+
+- profile 표현식
+    - Not 표현식이나 논리연산자 사용 가능 (&, |)
+       
+- Property
+    - 다양한 방법으로 정의할 수 있는 설정값
+    - Environment의 역할은 property source 설정 및 property 값 가져오기
+
+- property의 우선 순위 (StandardServletEnvironment의 우선 순위)
+    - ServletConfig 매개변수
+    - ServletContext 매개변수
+    - JNDI (java:comp/env/)
+    - JVM 시스템 프로퍼티 (-Dkey=”value”)
+    - JVM 시스템 환경 변수 (운영 체제 환경 변수)
+
+- Spring Boot의 외부 설정 참고
+    - 기본 프로퍼티 소스 지원 (application.properties)
+    - 프로파일까지 고려한 계층형 프로퍼티 우선 순위 제공
+
+
+- @PropertySource : Environment를 통해 property 추가하는 방법
+    ```
+    @SpringBootApplication
+    @PropertySource("classpath:/app.properties")
+    public class DemoApplication {
+        public static void main(String[] args) {
+            SpringApplication.run(DemoApplication.class, args);
+        }
+    }
+    ```
