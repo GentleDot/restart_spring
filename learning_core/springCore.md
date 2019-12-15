@@ -12,6 +12,7 @@
         - [@Component](#@Component)
         - [Bean의 Scope](#Scope-of-Beans)
         - [Environment](#Environment)
+        - [MessageSource](#MessageSource)
         
 ## 출처
 - 강좌
@@ -614,3 +615,89 @@ getEnvironment()
         }
     }
     ```
+
+#### MessageSource
+국제화 (i18n) 기능을 지원하는 interface
+
+ApplicationContext extends MessageSource
+
+- Spring Boot에서는 별다른 설정 없이 messages.properties 를 사용할 수 있음
+    - org.springframework.context.support.ResourceBundleMessageSource
+    - messages.properties
+    - messages_ko_KR.properties
+    - messages_en_US.properties
+    - ...
+
+- 리로딩 기능이 있는 메시지 소스 사용 (properties 파일 변경 시 바로 반영됨)
+    ```
+    package net.gentledot.demospringcore.demo.config;
+    
+    import net.gentledot.demospringcore.demo.DemoApplication;
+    import org.springframework.context.MessageSource;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.ComponentScan;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+    
+    @Configuration
+    public class ApplicationConfig {
+        
+        @Bean
+        public MessageSource messageSource() {
+             ReloadableResourceBundleMessageSource source = new ReloadableResourceBundleMessageSource();
+             // message property 파일의 위치와 이름 지정
+             source.setBasename("classpath:/messages");
+             // 기본 인코딩을 지정
+             source.setDefaultEncoding("UTF-8");
+             // property 파일의 변경을 감지할 시간 간격을 지정 (초 단위)
+             source.setCacheSeconds(10);
+             // 없는 메시지는 예외 발생하는 대신 코드를 기본 메시지로 함.
+             source.setUseCodeAsDefaultMessage(true);
+             
+            return source;
+        }
+    }
+    ```
+    ```
+    @Autowired
+    MessageSource messageSource;
+    
+    ......
+  
+    System.out.println("====== 인삿말 ======");
+    System.out.println(Locale.getDefault());
+    System.out.println(messageSource.getClass());
+    System.out.println(messageSource.getMessage("greeting", new String[]{"Spring"}, Locale.KOREA));
+    System.out.println(messageSource.getMessage("greeting", new String[]{"HTML"}, Locale.US));
+    ```
+    ```
+    2019-12-15 23:24:41.576 DEBUG 7992 --- [  restartedMain] o.s.c.e.PropertySourcesPropertyResolver  : Found key 'app.about' in PropertySource 'configurationProperties' with value of type String
+    ====== 인삿말 ======
+    ko_KR
+    class org.springframework.context.support.ReloadableResourceBundleMessageSource
+    2019-12-15 23:24:41.579 DEBUG 7992 --- [  restartedMain] .s.ReloadableResourceBundleMessageSource : Loading properties [messages_ko_KR.properties] with encoding 'UTF-8'
+    안녕, Spring
+    2019-12-15 23:24:41.580 DEBUG 7992 --- [  restartedMain] .s.ReloadableResourceBundleMessageSource : Loading properties [messages_en_US.properties] with encoding 'UTF-8'
+    hello, HTML
+    ```     
+- IntelliJ (콘솔, properties 파일) 한글 깨짐 문제 해결방법
+1. vmoptions 설정
+    - Dfile.encoding=UTF-8 추가 후 IntelliJ (재)시작
+        ![인텔리J_vmoptions_위치](../image/intellij_charset_1.JPG)
+        ![인텔리J_vmoptions_수정 후](../image/intellij_charset_2.JPG)
+        
+1. custom vmoption 설정
+    - Dfile.encoding=UTF-8 추가 후 IntelliJ (재)시작
+        ![인텔리J_custom_vmoptions_위치](../image/intellij_charset_3.JPG)
+        ![인텔리J_vmoptions_수정 후](../image/intellij_charset_4.JPG)
+
+1. settings > Editor > File Encoding 설정
+    - Encoding 및 properties file encoding을 UTF-8로 설정
+    - Transparent 체크
+        > 출처 : [IntelliJ 한글 인코딩 깨짐 해결](http://zuckaydev.blogspot.com/2016/05/intellij-properties-file-utf-8-encoding.html)
+    
+        ![인텔리J_File Encoding_수정 후](../image/intellij_charset_5.JPG)
+
+1. Run option (server option)에서 vmoption 설정
+      - Dfile.encoding=UTF-8 추가
+        ![인텔리J_Run option_수정 후](../image/intellij_charset_6.JPG)      
