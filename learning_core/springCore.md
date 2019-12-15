@@ -13,14 +13,19 @@
         - [Bean의 Scope](#Scope-of-Beans)
         - [Environment](#Environment)
         - [MessageSource](#MessageSource)
+        - [ApplicationEventPublisher](#ApplicationEventPublisher)
+        - [ResourceLoader](#ResourceLoader)
         
 ## 출처
 - 강좌
     1. [스프링 프레임워크 핵심 기술 / 백기선](https://www.inflearn.com/course/spring-framework_core)
+    
 - 문서
     1. [Spring Framework Documentation - Core](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#spring-core)
     1. [Quick Guide to Spring Bean Scopes](https://www.baeldung.com/spring-bean-scopes)
     1. [스프링 @Profile 어노테이션을 통한 환경 설정(Spring Environment Configuration, @Profile)](https://engkimbs.tistory.com/712)
+    1. [Spring - IoC 컨테이너의 기능 - 4(ApplicationEventPublisher 란?)](https://galid1.tistory.com/517)
+    
 - 도서
     1. 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 
 
@@ -700,4 +705,249 @@ ApplicationContext extends MessageSource
 
 1. Run option (server option)에서 vmoption 설정
       - Dfile.encoding=UTF-8 추가
-        ![인텔리J_Run option_수정 후](../image/intellij_charset_6.JPG)      
+        ![인텔리J_Run option_수정 후](../image/intellij_charset_6.JPG)
+        
+#### ApplicationEventPublisher
+이벤트 프로그래밍에 필요한 interface 제공. 옵저버 패턴 구현체.
+
+ 
+> 출처 :   
+> - [Spring - IoC 컨테이너의 기능 - 4(ApplicationEventPublisher 란?)](https://galid1.tistory.com/517)
+> - [위키백과 - 옵저버 패턴](https://en.wikipedia.org/wiki/Observer_pattern)
+> ![Observer Pattern](https://upload.wikimedia.org/wikipedia/commons/a/a8/Observer_w_update.svg "옵저버패턴 UML")
+
+ApplicationContext extends ApplicationEventPublisher
+- publishEvent(ApplicationEvent event)
+
+- 이벤트 객체 생성
+    - ApplicationEvent 상속 (Spring 4.2 버전 이전)
+        ```
+        // Spring 4.2 이전 버전에서의 Event 객체
+        public class MyEvent extends ApplicationEvent {
+        
+            private int data;
+        
+            *//**
+             * Create a new {@code ApplicationEvent}.
+             *
+             * @param source the object on which the event initially occurred or with
+             *               which the event is associated (never {@code null})
+             *//*
+            public MyEvent(Object source) {
+                super(source);
+            }
+        
+            public MyEvent(Object source, int data) {
+                super(source);
+                this.data = data;
+            }
+        
+            public int getData() {
+                return data;
+            }
+        }
+        ```
+    
+    - Spring 4.2 버전 이후부터는 ApplicationEvent 상속 없이도 객체를 생성할 수 있음
+        - POJO, 비침투성 
+        
+        ```
+        package net.gentledot.demospringcore.demo.config;
+        
+        public class MyEvent {
+            private Object source;
+            private int data;
+        
+            public MyEvent(Object source, int data) {
+                this.source = source;
+                this.data = data;
+            }
+        
+            public Object getSource() {
+                return source;
+            }
+        
+            public int getData() {
+                return data;
+            }
+        }
+        ```
+      
+- 이벤트 발생
+    - org.springframework.context.ApplicationEventPublisher
+        - publishEvent(Event 객체);  
+        ex) publishEvent(new MyEvent(this, 100));
+        
+- 이벤트 처리 (EventListener)
+    - ApplicationListener<Event.Class> 를 구현한 클래스를 Bean으로 등록 (Spring 4.2 이전)
+        ```
+        // Spring 4.2 이전 버전에서의 EventListener
+        public class MyEventHandler implements ApplicationListener<MyEvent> {
+            @Override
+            public void onApplicationEvent(MyEvent event) {
+                System.out.println("이벤트 받음. 받은 데이터는 " + event.getData());
+            }
+        }
+        ```
+    
+    - Spring 4.2 부터는 @EventListener를 사용해서 Bean의 method에 사용 할 수 있음
+        ```
+        package net.gentledot.demospringcore.demo.config;
+        
+        import org.springframework.context.event.*;
+        import org.springframework.stereotype.Component;
+        
+        @Component
+        public class MyEventHandler {
+        
+            @EventListener
+            public void eventHandle(MyEvent event) {
+                System.out.println("MyEventHandler 에서 이벤트 받음. 받은 데이터는 " + event.getData());
+            }
+        ```
+      
+    - 기본적으로는 synchronized
+    
+    - 순서를 정해야한다면 Bean의 실행 순서를 설정할 수 있는 @Order 함께 사용
+    
+    - 비동기적으로 실행하려면 @Async 사용 (+ Spring Boot의 mainRunner 클래스에 @EnableAsync 사용)
+        ```
+        package net.gentledot.demospringcore.demo;
+        
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        import org.springframework.context.annotation.PropertySource;
+        import org.springframework.scheduling.annotation.EnableAsync;
+        
+        @SpringBootApplication
+        @PropertySource("classpath:/app.properties")
+        @EnableAsync
+        public class DemoApplication {
+            public static void main(String[] args) {
+                SpringApplication.run(DemoApplication.class, args);
+            }
+        }
+        ```
+      
+- 스프링에서 제공하는 기본 이벤트
+    - ContextRefreshedEvent: ApplicationContext를 초기화 했더나 리프래시 했을 때 발생.
+    - ContextStartedEvent: ApplicationContext를 start()하여 라이프사이클 빈들이 시작 신호를 받은 시점에 발생.
+    - ContextStoppedEvent: ApplicationContext를 stop()하여 라이프사이클 빈들이 정지 신호를 받은 시점에 발생.
+    - ContextClosedEvent: ApplicationContext를 close()하여 싱글톤 빈 소멸되는 시점에 발생.
+    - RequestHandledEvent: HTTP 요청을 처리했을 때 발생.
+    
+    ```
+    package net.gentledot.demospringcore.demo.config;
+    
+    import org.springframework.context.event.*;
+    import org.springframework.scheduling.annotation.Async;
+    import org.springframework.stereotype.Component;
+    import org.springframework.web.context.support.RequestHandledEvent;
+    
+    @Component
+    public class MyEventHandler {
+    
+        @EventListener
+        @Async
+        public void eventHandle(MyEvent event) {
+            System.out.println(Thread.currentThread().toString());
+            System.out.println("MyEventHandler 에서 이벤트 받음. 받은 데이터는 " + event.getData());
+        }
+    
+        @EventListener
+        @Async
+        public void eventHandle(ContextRefreshedEvent event) {
+            System.out.println(Thread.currentThread().toString());
+            System.out.println("MyEventHandler_ContextRefreshedEvent");
+            System.out.println("Source는 " + event.getSource());
+            System.out.println("context : " + event.getApplicationContext());
+        }
+    
+        @EventListener
+        @Async
+        public void eventHandle(ContextStartedEvent event) {
+            System.out.println(Thread.currentThread().toString());
+            System.out.println("MyEventHandler_ContextStartedEvent");
+            System.out.println("Source는 " + event.getSource());
+            System.out.println("context : " + event.getApplicationContext());
+        }
+    
+        @EventListener
+        @Async
+        public void eventHandle(ContextStoppedEvent event) {
+            System.out.println(Thread.currentThread().toString());
+            System.out.println("MyEventHandler_ContextStoppedEvent");
+            System.out.println("Source는 " + event.getSource());
+            System.out.println("context : " + event.getApplicationContext());
+        }
+    
+        @EventListener
+        @Async
+        public void eventHandle(ContextClosedEvent event) {
+            System.out.println(Thread.currentThread().toString());
+            System.out.println("MyEventHandler_ContextClosedEvent");
+            System.out.println("Source는 " + event.getSource());
+            System.out.println("context : " + event.getApplicationContext());
+        }
+    
+        @EventListener
+        @Async
+        public void eventHandle(RequestHandledEvent event) {
+            System.out.println(Thread.currentThread().toString());
+            System.out.println("MyEventHandler_RequestHandledEvent");
+            System.out.println("Source는 " + event.getSource());
+    //        System.out.println("context : " + event.getApplicationContext());
+        }
+    }
+    ```
+  
+    ```
+    2019-12-16 00:23:13.469 DEBUG 10792 --- [  restartedMain] o.s.j.e.a.AnnotationMBeanExporter        : Autodetecting user-defined JMX MBeans
+    Thread[task-1,5,main]
+    MyEventHandler_ContextRefreshedEvent
+    Source는 org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@19c85301, started on Mon Dec 16 00:23:12 KST 2019
+    context : org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@19c85301, started on Mon Dec 16 00:23:12 KST 2019
+  
+    2019-12-16 00:23:18.095 DEBUG 10792 --- [nio-8080-exec-1] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler ["classpath:/META-INF/resources/", "classpath:/resources/", "classpath:/static/", "classpath:/public/", "/"]
+    2019-12-16 00:23:18.096 DEBUG 10792 --- [nio-8080-exec-1] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+    2019-12-16 00:23:18.097 DEBUG 10792 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
+    Thread[task-4,5,main]
+    MyEventHandler_RequestHandledEvent
+    Source는 org.springframework.web.servlet.DispatcherServlet@2826ad97
+  
+    2019-12-16 00:23:23.336 DEBUG 10792 --- [extShutdownHook] ConfigServletWebServerApplicationContext : Closing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@19c85301, started on Mon Dec 16 00:23:12 KST 2019
+    2019-12-16 00:23:23.336 DEBUG 10792 --- [extShutdownHook] o.s.c.e.PropertySourcesPropertyResolver  : Found key 'spring.liveBeansView.mbeanDomain' in PropertySource 'systemProperties' with value of type String
+    Thread[task-6,5,main]
+    MyEventHandler_ContextClosedEvent
+    Source는 org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@19c85301, started on Mon Dec 16 00:23:12 KST 2019
+    context : org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@19c85301, started on Mon Dec 16 00:23:12 KST 2019
+    ```
+
+
+#### ResourceLoader
+ApplicationContext extends ResourceLoader
+
+- resource 읽어오기
+    - 파일 시스템에서 읽어오기
+    - 클래스패스에서 읽어오기
+    - URL로 읽어오기
+    - 상대/절대 경로로 읽어오기
+
+-  getResource(String location)
+    - src\main\resources\test.txt 가져오기
+    
+    ```
+    Resource resource = resourceLoader.getResource("classpath:test.txt");
+    System.out.println(resource.exists());
+    System.out.println(resource.getFilename());
+    System.out.println(resource.getDescription());
+    // readString 은 java 11 버전
+    System.out.println(Files.readString(Path.of(resource.getURI())));
+    ```
+    ```
+    ====== Resource ======
+    true
+    test.txt
+    class path resource [test.txt]
+    test를 위해 text파일을 생성함
+    ```
