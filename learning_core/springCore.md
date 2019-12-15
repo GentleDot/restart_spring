@@ -15,6 +15,9 @@
         - [MessageSource](#MessageSource)
         - [ApplicationEventPublisher](#ApplicationEventPublisher)
         - [ResourceLoader](#ResourceLoader)
+    - [추상화](#추상화)
+        - [Resource 추상화](#Resource-추상화)
+            
         
 ## 출처
 - 강좌
@@ -950,4 +953,114 @@ ApplicationContext extends ResourceLoader
     test.txt
     class path resource [test.txt]
     test를 위해 text파일을 생성함
+    ```
+
+### 추상화
+
+#### Resource 추상화
+org.springframework.core.io.Resource
+
+
+- 특징
+    - java.net.URL을 추상화 한 것.
+    - 스프링 내부에서 많이 사용하는 인터페이스.
+
+- 추상화 필요성
+    - Resource를 가져오는 방법 통일
+    - classpath 기준으로 리소스 읽어오는 기능 부재
+    - ServletContext를 기준으로 상대 경로로 읽어오는 기능 부재
+    - 새로운 handler를 등록하여 특별한 URL 접미사를 만들어 사용할 수는 있지만 구현이 복잡하고 편의성 method가 부족하다.
+
+- interface Resource extends InputStreamSource
+    > - [docs.oracle.com - java.net.URL](https://docs.oracle.com/javase/7/docs/api/java/net/URL.html)
+    > - [docs.spring.io - Resource](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/io/Resource.html)
+
+- 구현체
+    - AbstractFileResolvingResource, AbstractResource, ByteArrayResource, ClassPathResource, DefaultResourceLoader.ClassPathContextResource, DescriptiveResource, FileSystemResource, FileUrlResource, InputStreamResource, PathResource, ServletContextResource, TransformedResource, TransformedResource, UrlResource, VfsResource
+    
+        - UrlResource: ​java.net.URL​ 참고, 기본으로 지원하는 프로토콜 http, https, ftp, file, jar.
+        - ClassPathResource: 지원하는 접두어 classpath:
+        - FileSystemResource: 지원하는 접두어 file://
+        - ServletContextResource: 웹 애플리케이션 루트에서 상대 경로로 리소스 찾는다.
+
+- resource 읽어오기
+    - Resource의 타입은 locaion 문자열과 ​ApplicationContext의 타입에 따라 결정 된다.
+        - ClassPathXmlApplicationContext -> ClassPathResource
+        - FileSystemXmlApplicationContext -> FileSystemResource
+        - WebApplicationContext -> ServletContextResource
+    
+    - ApplicationContext의 타입에 상관없이 resource 타입을 강제하려면 java.net.URL 접두어(+ classpath:)중 하나를 사용할 수 있다.
+        - classpath:​me/whiteship/config.xml -> ClassPathResource
+        - file://​/some/resource/path/config.xml -> FileSystemResource
+
+- resource 타입의 변동
+    ```
+    package net.gentledot.demospringcore.demo.book;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.boot.ApplicationArguments;
+    import org.springframework.boot.ApplicationRunner;
+    import org.springframework.context.ApplicationContext;
+    import org.springframework.context.ApplicationEventPublisher;
+    import org.springframework.context.MessageSource;
+    import org.springframework.core.io.Resource;
+    import org.springframework.core.io.ResourceLoader;
+    import org.springframework.stereotype.Component;
+    
+    import java.nio.file.Files;
+    import java.nio.file.Path;
+    
+    @Component
+    public class AppRunner implements ApplicationRunner {
+    
+        @Autowired
+        ApplicationContext ctx;
+    
+        @Autowired
+        MessageSource messageSource;
+    
+        @Autowired
+        ApplicationEventPublisher eventPublisher;
+    
+        @Autowired
+        ResourceLoader resourceLoader;
+    
+        @Override
+        public void run(ApplicationArguments args) throws Exception {
+            System.out.println("====== Resource ======");
+            System.out.println(resourceLoader.getClass());
+    
+            Resource resource = resourceLoader.getResource("classpath:test.txt");
+            System.out.println(resource.getClass());
+    
+            System.out.println(resource.exists());
+            System.out.println(resource.getFilename());
+            System.out.println(resource.getDescription());
+            // readString 은 java 11 버전
+            System.out.println(Files.readString(Path.of(resource.getURI())));
+        }
+    }
+    ```
+    ```
+    // getResource("classpath:test.txt") 로 resource를 가져오는 경우
+    2019-12-16 01:20:46.584  INFO 20296 --- [  restartedMain] n.g.demospringcore.demo.DemoApplication  : Started DemoApplication in 1.472 seconds (JVM running for 2.395)
+    ====== Resource ======
+    class org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext
+    class org.springframework.core.io.ClassPathResource
+    true
+    test.txt
+    class path resource [test.txt]
+    test를 위해 text파일을 생성함
+  
+    // getResource("test.txt") 로 resource를 가져오는 경우
+    2019-12-16 01:22:51.892  INFO 9956 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+    2019-12-16 01:22:51.896  INFO 9956 --- [  restartedMain] n.g.demospringcore.demo.DemoApplication  : Started DemoApplication in 1.441 seconds (JVM running for 2.378)
+    ====== Resource ======
+    class org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext
+    class org.springframework.web.context.support.ServletContextResource
+    false
+    test.txt
+    ServletContext resource [/test.txt]
+  
+    2019-12-16 01:22:51.913 ERROR 9956 --- [  restartedMain] o.s.boot.SpringApplication               : Application run failed
     ```
