@@ -9,12 +9,11 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:/app.properties")
 public class DemoApplication {
     public static void main(String[] args) {
-        /*
-        서버 기동 없이 실행
         SpringApplication app = new SpringApplication(DemoApplication.class);
-        app.setWebApplicationType(WebApplicationType.NONE);
+        app.setWebApplicationType(WebApplicationType.SERVLET);
+//         서버 기동 없이 실행
+//        app.setWebApplicationType(WebApplicationType.NONE);
         app.run(args);
-        */
-        SpringApplication.run(DemoApplication.class, args);
+//        SpringApplication.run(DemoApplication.class, args);
     }
 }

@@ -19,7 +19,8 @@
         - [Resource 추상화](#Resource-추상화)
         - [Validation 추상화](#Validation-추상화)
         - [데이터 바인딩 추상화](#데이터-바인딩-추상화)
-            
+    - [SpEL](#SpEL)
+    - [Spring AOP](#Spring-AOP)
         
 ## 출처
 - 강좌
@@ -31,6 +32,7 @@
     1. [스프링 @Profile 어노테이션을 통한 환경 설정(Spring Environment Configuration, @Profile)](https://engkimbs.tistory.com/712)
     1. [Spring - IoC 컨테이너의 기능 - 4(ApplicationEventPublisher 란?)](https://galid1.tistory.com/517)
     1. [Thymeleaf에서 SpEL로 Enum 접근하기](https://blog.outsider.ne.kr/997)
+    1. [관심사의 분리(Separation of Concerns)](https://kwangyulseo.com/2015/05/29/%EA%B4%80%EC%8B%AC%EC%82%AC%EC%9D%98-%EB%B6%84%EB%A6%ACseparation-of-concerns/)
     
 - 도서
     1. 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 
@@ -1615,3 +1617,163 @@ Spring Expression Language
     - @Query 애노테이션
 - Thymeleaf
 - ...
+
+
+### Spring AOP
+AOP : Aspect-oriendted Programming
+> [wikipedia - AOP](https://en.wikipedia.org/wiki/Aspect-oriented_programming)
+
+
+- 주요 개념
+    - Aspect와 Target 
+    - Advice
+    - Join point와 Pointcut
+
+- 구현체 (Java)
+    - AspectJ
+    - 스프링 AOP
+
+- 적용 방법
+    - 컴파일
+    - 로드타임
+    - 런타임
+
+#### Proxy 기반 AOP
+- 스프링 AOP 특징
+    - Proxy 기반 AOP 구현체
+    - Spring Bean에만 AOP를 적용할 수 있다.
+    - 스프링 IoC와 연동하여 Enterprise Application에서 가장 흔한 문제에 대한 해결책을 제공하는 것이 목적. (관심사의 분리)
+    (모든 AOP 기능을 제공하는 것이 목적이 아님)
+        > [관심사의 분리(Separation of Concerns)](https://kwangyulseo.com/2015/05/29/%EA%B4%80%EC%8B%AC%EC%82%AC%EC%9D%98-%EB%B6%84%EB%A6%ACseparation-of-concerns/)
+        
+- Proxy Pattern (기존 코드를 건드리지 않고...)
+    ![프록시 패턴의 예](../image/proxy.JPG)
+    
+- 스프링 AOP는
+    - 스프링 IoC 컨테이너가 제공하는 기반 시설과 Dynamic 프록시를 사용하여 여러 복잡한 문제 해결.
+
+    - 동적 프록시: 동적으로 프록시 객체 생성하는 방법
+        - 자바가 제공하는 방법은 인터페이스 기반 프록시 생성.
+        - CGlib은 클래스 기반 프록시도 지원.
+
+    - 스프링 IoC: 기존 빈을 대체하는 동적 프록시 Bean을 만들어 등록 시켜준다.
+        - 클라이언트 코드 변경 없음.
+        - AbstractAutoProxyCreator implements BeanPostProcessor
+        
+
+```
+package net.gentledot.demospringcore.demo.book;
+
+public interface EventService {
+
+    void createEvent();
+
+    void publishEvent();
+
+    void deleteEvent();
+}
+```
+
+```
+package net.gentledot.demospringcore.demo.book;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class SimpleEventService implements EventService {
+    @Override
+    public void createEvent() {
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Created an event");
+
+    }
+
+    @Override
+    public void publishEvent() {
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Published an event");
+
+    }
+
+    public void deleteEvent() {
+        System.out.println("Delete an event");
+    }
+}
+```
+
+```
+package net.gentledot.demospringcore.demo.book;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+
+@Primary
+@Service
+public class ProxyEventService implements EventService {
+
+    @Autowired
+    EventService simpleEventService;
+
+    @Override
+    public void createEvent() {
+        long begin = System.currentTimeMillis();
+        simpleEventService.createEvent();
+        System.out.println(System.currentTimeMillis() - begin);
+    }
+
+    @Override
+    public void publishEvent() {
+        long begin = System.currentTimeMillis();
+        simpleEventService.publishEvent();
+        System.out.println(System.currentTimeMillis() - begin);
+    }
+
+    @Override
+    public void deleteEvent() {
+        simpleEventService.deleteEvent();
+    }
+}
+```
+
+```
+package net.gentledot.demospringcore.demo.book;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
+
+@Component
+public class AppRunner implements ApplicationRunner {
+
+    @Autowired
+    EventService eventService;
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        eventService.createEvent();
+        eventService.publishEvent();
+        eventService.deleteEvent();
+    }
+}
+```
+
+```
+2019-12-16 23:16:53.497  INFO 747 --- [  restartedMain] n.g.demospringcore.demo.DemoApplication  : Started DemoApplication in 4.752 seconds (JVM running for 12.319)
+Created an event
+1001
+Published an event
+1001
+Delete an event
+```
