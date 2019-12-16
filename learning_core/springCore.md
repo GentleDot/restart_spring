@@ -1777,3 +1777,33 @@ Published an event
 1001
 Delete an event
 ```
+
+
+#### Spring AOP - @AOP
+Annotation 기반 Spring AOP
+> [aop-pointcut](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#aop-pointcuts)
+
+의존성 추가
+```
+compile 'org.springframework.boot:spring-boot-starter-aop:2.2.1.RELEASE'
+```
+
+- Aspect 정의
+    - @Aspect
+    - Bean으로 등록해야 하니까 (컴포넌트 스캔을 사용한다면) @Component도 추가.
+
+- 포인트컷 정의
+    - @Pointcut(표현식)
+    - 주요표현식
+        - execution
+        - @annotation
+        - bean
+
+- 포인트컷 조합
+    - \&&, \||, \!
+
+- 어드바이스 정의
+    - @Before
+    - @AfterReturning
+    - @AfterThrowing
+    - @Around
