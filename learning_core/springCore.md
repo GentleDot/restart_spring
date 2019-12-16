@@ -17,6 +17,7 @@
         - [ResourceLoader](#ResourceLoader)
     - [추상화](#추상화)
         - [Resource 추상화](#Resource-추상화)
+        - [Validation 추상화](#Validation-추상화)
             
         
 ## 출처
@@ -1064,3 +1065,235 @@ org.springframework.core.io.Resource
   
     2019-12-16 01:22:51.913 ERROR 9956 --- [  restartedMain] o.s.boot.SpringApplication               : Application run failed
     ```
+  
+#### Validation 추상화
+org.springframework.validation.Validator  
+application에서 사용하는 객체 검증용 interface
+
+
+- 특징
+    - 어떤한 계층과도 관계가 없다. => 모든 계층(웹, 서비스, 데이터)에서 사용해도 좋다.
+    - 구현체 중 하나로, JSR-303(Bean Validation 1.0)과 JSR-349(Bean Validation 1.1)을 지원한다. (​LocalValidatorFactoryBean​)
+    - DataBinder에 들어가 바인딩 할 때 같이 사용되기도 한다.
+
+- Interface Validator
+    > [interface Validator](https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/validation/Validator.html)
+
+    - boolean supports(Class clazz): 어떤 타입의 객체를 검증할 때 사용할 것인지 결정함
+    - void validate(Object obj, Errors e): 실제 검증 로직을 이 안에서 구현
+        - 구현할 때 ValidationUtils 사용하며 편리 함.
+
+
+```
+package net.gentledot.demospringcore.demo.Validator;
+
+import net.gentledot.demospringcore.demo.book.Event;
+import org.springframework.validation.Errors;
+import org.springframework.validation.ValidationUtils;
+import org.springframework.validation.Validator;
+
+public class EventValidator implements Validator {
+    @Override
+    public boolean supports(Class<?> clazz) {
+        return Event.class.equals(clazz);
+    }
+
+    @Override
+    public void validate(Object target, Errors errors) {
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "title", "notEmpty", "defaultMessage.");
+        /*
+        Event event = (Event) target;
+        if (event.getTitle() == null) {
+            // 전반적인 에러 처리
+            errors.reject();
+            // 특정 field 값의 에러 처리
+            errors.rejectValue();
+        }
+        */
+    }
+}
+```
+
+```
+package net.gentledot.demospringcore.demo.book;
+
+import net.gentledot.demospringcore.demo.Validator.EventValidator;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.Errors;
+
+import java.util.Arrays;
+
+@Component
+public class AppRunner implements ApplicationRunner {
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        Event event = new Event();
+        EventValidator eventValidator = new EventValidator();
+        // spring MVC가 자동으로 Binding 하여 처리
+        Errors errors = new BeanPropertyBindingResult(event, "event");
+
+        eventValidator.validate(event,errors);
+
+        System.out.println(errors.hasErrors());
+        errors.getAllErrors().forEach(e -> {
+            System.out.println("====== errorCode ======");
+            Arrays.stream(e.getCodes()).forEach(System.out::println);
+            System.out.println(e.getDefaultMessage());
+        });
+    }
+}
+```
+```
+2019-12-16 10:13:49.219  INFO 28224 --- [  restartedMain] n.g.demospringcore.demo.DemoApplication  : Started DemoApplication in 1.485 seconds (JVM running for 2.528)
+2019-12-16 10:13:49.225 DEBUG 28224 --- [  restartedMain] o.s.beans.CachedIntrospectionResults     : Not strongly caching class [net.gentledot.demospringcore.demo.book.Event] because it is not cache-safe
+true
+====== errorCode ======
+notEmpty.event.title
+notEmpty.title
+notEmpty.java.lang.String
+notEmpty
+defaultMessage.
+```
+
+- LocalValidatorFactoryBean (Spring Boot 2.0.5 이상)
+    - LocalValidatorFactoryBean ​빈으로 자동 등록
+        ```
+        @Qualifier("mvcValidator")
+        @Autowired
+        Validator validator;
+        
+        // class org.springframework.boot.autoconfigure.validation.ValidatorAdapter
+      
+        // @Qualifier("defaultValidator")
+        @Autowired
+        Validator validator;  
+      
+        // class org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
+        ```
+    
+    - JSR-380(Bean Validation 2.0.1) 구현체로 hibernate-validator 사용.
+    - support for the new date/time data types (JSR 310) for @Past and @Future
+    - new built-in constraints: @Email, @NotEmpty, @NotBlank, @Positive, @PositiveOrZero, @Negative, @NegativeOrZero, @PastOrPresent and @FutureOrPresent
+    > https://beanvalidation.org/
+
+```
+package net.gentledot.demospringcore.demo.book;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+
+public class Event {
+    Integer id;
+
+    @NotEmpty
+    String title;
+
+    @Min(0)
+    Integer limit;
+
+    @Email
+    String Email;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
+
+    public String getEmail() {
+        return Email;
+    }
+
+    public void setEmail(String email) {
+        Email = email;
+    }
+}
+```
+```
+package net.gentledot.demospringcore.demo.book;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+import java.util.Arrays;
+
+@Component
+public class AppRunner implements ApplicationRunner {
+    
+    @Autowired
+    Validator validator;
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+//        EventValidator eventValidator = new EventValidator();
+        System.out.println(validator.getClass());
+        Event event = new Event();
+        event.setLimit(-2);
+        event.setEmail("abcd");
+        // spring MVC가 자동으로 Binding 하여 처리
+        Errors errors = new BeanPropertyBindingResult(event, "event");
+
+        validator.validate(event,errors);
+
+        System.out.println(errors.hasErrors());
+        errors.getAllErrors().forEach(e -> {
+            System.out.println("====== errorCode ======");
+            Arrays.stream(e.getCodes()).forEach(System.out::println);
+            System.out.println(e.getDefaultMessage());
+        });
+
+    }
+}
+```
+```
+2019-12-16 10:49:26.866  INFO 18708 --- [  restartedMain] n.g.demospringcore.demo.DemoApplication  : Started DemoApplication in 1.643 seconds (JVM running for 3.455)
+class org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
+2019-12-16 10:49:26.935 DEBUG 18708 --- [  restartedMain] o.s.beans.CachedIntrospectionResults     : Not strongly caching class [net.gentledot.demospringcore.demo.book.Event] because it is not cache-safe
+true
+====== errorCode ======
+Email.event.Email
+Email.Email
+Email.java.lang.String
+Email
+이메일 주소가 유효하지 않습니다.
+====== errorCode ======
+Min.event.limit
+Min.limit
+Min.java.lang.Integer
+Min
+반드시 0보다 같거나 커야 합니다.
+====== errorCode ======
+NotEmpty.event.title
+NotEmpty.title
+NotEmpty.java.lang.String
+NotEmpty
+반드시 값이 존재하고 길이 혹은 크기가 0보다 커야 합니다.
+```
