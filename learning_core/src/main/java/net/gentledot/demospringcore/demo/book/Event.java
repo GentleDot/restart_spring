@@ -1,20 +1,13 @@
 package net.gentledot.demospringcore.demo.book;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-
 public class Event {
     Integer id;
 
-    @NotEmpty
     String title;
 
-    @Min(0)
-    Integer limit;
-
-    @Email
-    String Email;
+    public Event(int id) {
+        this.id = id;
+    }
 
     public Integer getId() {
         return id;
@@ -32,19 +25,11 @@ public class Event {
         this.title = title;
     }
 
-    public Integer getLimit() {
-        return limit;
-    }
-
-    public void setLimit(Integer limit) {
-        this.limit = limit;
-    }
-
-    public String getEmail() {
-        return Email;
-    }
-
-    public void setEmail(String email) {
-        Email = email;
+    @Override
+    public String toString() {
+        return "Event{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                '}';
     }
 }
