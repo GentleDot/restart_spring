@@ -30,6 +30,7 @@
     1. [Quick Guide to Spring Bean Scopes](https://www.baeldung.com/spring-bean-scopes)
     1. [스프링 @Profile 어노테이션을 통한 환경 설정(Spring Environment Configuration, @Profile)](https://engkimbs.tistory.com/712)
     1. [Spring - IoC 컨테이너의 기능 - 4(ApplicationEventPublisher 란?)](https://galid1.tistory.com/517)
+    1. [Thymeleaf에서 SpEL로 Enum 접근하기](https://blog.outsider.ne.kr/997)
     
 - 도서
     1. 스프링 4 입문 - 웹 애플리케이션의 기초부터 클라우드 네이티브 입문까지 / 하세가와 유이치, 오오노 와타루, 토키 코헤이 (옮긴이 : 권은철, 전민수, 펴낸이 : 김태현) - 한빛미디어 
@@ -1575,3 +1576,42 @@ public class WebConfig implements WebMvcConfigurer {
     }
 }
 ```
+
+### SpEL
+Spring Expression Language
+
+> - [Spring EL](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#expressions)
+>   - [SpEL 표현식](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#expressions-language-ref)
+> - [Spring Security - EL-access](https://docs.spring.io/spring-security/site/docs/3.0.x/reference/el-access.html)
+> - [Spring Data JPA - @query](https://spring.io/blog/2014/07/15/spel-support-in-spring-data-jpa-query-definitions)
+> - [Thymeleaf에서 SpEL로 Enum 접근하기](https://blog.outsider.ne.kr/997)
+
+- 스프링 EL​이란?
+    - 객체 그래프를 조회하고 조작하는 기능을 제공한다.
+    - Unified EL​과 비슷하지만, 메소드 호출을 지원하며, 문자열 템플릿 기능도 제공한다.
+    - OGNL, MVEL, JBOss EL 등 자바에서 사용할 수 있는 여러 EL이 있지만, SpEL은 모든 스프링 프로젝트 전반에 걸쳐 사용할 EL로 만들었다.
+    - 스프링 3.0 부터 지원.
+
+- SpEL 구성
+    - ExpressionParser​ parser = new SpelExpressionParser()
+    - StandardEvaluationContext context = new Standard​EvaluationContext​(bean)
+    - Expression expression = parser.parseExpression(“SpEL 표현식”)
+    - String value = expression.getvalue(context, String.class)
+
+- 문법
+    - \#{“표현식"}
+    - \${“프로퍼티"}
+    - 표현식은 프로퍼티를 가질 수 있지만, 반대는 안 됨.
+        - \#{${my.data} + 1}
+
+- 실제로 어디서 쓰나?
+    - @Value 애노테이션
+    - @ConditionalOnExpression 애노테이션
+    - 스프링 시큐리티
+        - 메소드 시큐리티, @PreAuthorize, @PostAuthorize, @PreFilter, @PostFilter
+        - XML 인터셉터 URL 설정
+        - ...
+- 스프링 데이터
+    - @Query 애노테이션
+- Thymeleaf
+- ...
